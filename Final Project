@@ -1,0 +1,104 @@
+import sqlite3
+
+class PatientRecordSystem:
+    def __init__(self, db_name):
+        self.conn = sqlite3.connect(db_name)
+        self.cursor = self.conn.cursor()
+        self.create_table()
+
+    def create_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS patients (
+                id INTEGER PRIMARY KEY,
+                name TEXT,
+                age INTEGER,
+                gender TEXT,
+                medical_history TEXT,
+                diagnoses TEXT,
+                treatment_plans TEXT
+            )
+        ''')
+        self.conn.commit()
+
+    # Create operation
+    def add_patient_record(self):
+        name = input("Enter patient's name: ")
+        age = int(input("Enter patient's age: "))
+        gender = input("Enter patient's gender: ")
+        medical_history = input("Enter patient's medical history: ")
+        diagnoses = input("Enter patient's diagnoses: ")
+        treatment_plans = input("Enter patient's treatment plans: ")
+        self.cursor.execute('''
+            INSERT INTO patients (name, age, gender, medical_history, diagnoses, treatment_plans)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (name, age, gender, medical_history, diagnoses, treatment_plans))
+        self.conn.commit()
+        print("Patient record added successfully.")
+
+    # Read operation
+    def get_patient_record(self):
+        self.show_all_patients()
+        patient_id = int(input("Enter patient ID to get details: "))
+        self.cursor.execute('''
+            SELECT * FROM patients WHERE id=?
+        ''', (patient_id,))
+        return self.cursor.fetchone()
+
+    # Update operation
+    def update_patient_record(self):
+        self.show_all_patients()
+        patient_id = int(input("Enter patient ID to update: "))
+        field = input("Enter field to update (name/age/gender/medical_history/diagnoses/treatment_plans): ")
+        value = input(f"Enter new value for {field}: ")
+        self.cursor.execute(f'''
+            UPDATE patients SET {field}=? WHERE id=?
+        ''', (value, patient_id))
+        self.conn.commit()
+        print("Patient record updated successfully.")
+
+    # Delete operation
+    def delete_patient_record(self):
+        self.show_all_patients()
+        patient_id = int(input("Enter patient ID to delete: "))
+        self.cursor.execute('''
+            DELETE FROM patients WHERE id=?
+        ''', (patient_id,))
+        self.conn.commit()
+        print("Patient record deleted successfully.")
+
+    def show_all_patients(self):
+        self.cursor.execute('''
+            SELECT id, name FROM patients
+        ''')
+        patients = self.cursor.fetchall()
+        print("All Patients:")
+        for patient in patients:
+            print(f"ID: {patient[0]}, Name: {patient[1]}")
+
+    def __del__(self):
+        self.conn.close()
+
+# Example usage:
+patient_system = PatientRecordSystem('patient_records.db')
+
+while True:
+    print("\nMenu:")
+    print("1. Add Patient Record")
+    print("2. Get Patient Record")
+    print("3. Update Patient Record")
+    print("4. Delete Patient Record")
+    print("5. Exit")
+    choice = input("Enter your choice: ")
+
+    if choice == '1':
+        patient_system.add_patient_record()
+    elif choice == '2':
+        print(patient_system.get_patient_record())
+    elif choice == '3':
+        patient_system.update_patient_record()
+    elif choice == '4':
+        patient_system.delete_patient_record()
+    elif choice == '5':
+        break
+    else:
+        print("Invalid choice. Please enter a valid option.")
